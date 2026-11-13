@@ -693,14 +693,6 @@ async function loadGame() {
   }
 }
 
-async function fetchWordList(filename) {
-  const response = await fetch(`./${filename}`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Unable to load ${filename}: HTTP ${response.status}`);
-  const data = await response.json();
-  if (!data || !Array.isArray(data.words)) throw new Error(`${filename} has no words array`);
-  return data;
-}
-
 async function selectWordList(confirmUnsaved = true, requestedLevel) {
   const filename = currentWordList;
   if (confirmUnsaved && currentPuzzle && !gameSaved && !window.confirm(text("unsavedChanges"))) {
@@ -709,7 +701,7 @@ async function selectWordList(confirmUnsaved = true, requestedLevel) {
   elements.status.className = "game-status";
   elements.status.textContent = text("loading");
   try {
-    const data = await fetchWordList(filename);
+    const data = await window.CrosswordStorage.loadWordList(filename);
     currentWordList = filename;
     const levels = Array.isArray(data.meta?.levels)
       ? data.meta.levels.map((level) => level?.key).filter((level) => typeof level === "string")

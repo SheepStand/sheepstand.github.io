@@ -9,6 +9,7 @@
   const EXPORT_FORMAT = "crossword-html-backup";
   const BOARD_SIZE = 31;
   const DEFAULT_ACCENT_COLOR = "#2563eb";
+  const WORD_LIST_CACHE_PREFIX = "crossword-word-list-v1:";
   const systemThemePreference = window.matchMedia("(prefers-color-scheme: dark)");
   let systemThemeListenerAttached = false;
 
@@ -214,6 +215,47 @@
       }
     }
     return saved;
+  }
+
+  async function loadWordList(filename = "word_list.json") {
+    const wordListUrl = new URL(filename, document.baseURI);
+    const hashUrl = new URL(`${filename}.hash`, document.baseURI);
+    const cacheKey = `${WORD_LIST_CACHE_PREFIX}${wordListUrl.pathname}`;
+    const hashResponse = await fetch(hashUrl, { cache: "no-store" });
+    if (!hashResponse.ok) throw new Error(`Unable to load ${hashUrl.pathname}: HTTP ${hashResponse.status}`);
+    const expectedHash = (await hashResponse.text()).trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(expectedHash)) {
+      throw new Error(`${hashUrl.pathname} does not contain a valid SHA-256 hash`);
+    }
+
+    try {
+      const cachedValue = localStorage.getItem(cacheKey);
+      if (cachedValue) {
+        const cached = JSON.parse(cachedValue);
+        if (cached.hash === expectedHash && typeof cached.wordList === "string") {
+          const data = JSON.parse(cached.wordList);
+          if (data && Array.isArray(data.words)) return data;
+          console.error(`Cached word list ${wordListUrl.pathname} is invalid; refreshing it.`);
+        }
+      }
+    } catch (error) {
+      console.error(`Unable to read cached word list ${wordListUrl.pathname}:`, error);
+    }
+
+    const response = await fetch(wordListUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Unable to load ${wordListUrl.pathname}: HTTP ${response.status}`);
+    const wordList = await response.text();
+    const data = JSON.parse(wordList);
+    if (!data || !Array.isArray(data.words)) {
+      throw new Error(`${wordListUrl.pathname} has no words array`);
+    }
+
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({ hash: expectedHash, wordList }));
+    } catch (error) {
+      console.error(`Unable to cache word list ${wordListUrl.pathname} in localStorage:`, error);
+    }
+    return data;
   }
 
   function applyAppearance(settings = readSettings()) {
@@ -462,6 +504,7 @@
     writeProgress,
     readSettings,
     writeSettings,
+    loadWordList,
     applyAppearance,
     clearLearningProgress,
     exportData,

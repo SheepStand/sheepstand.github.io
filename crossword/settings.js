@@ -181,10 +181,7 @@ async function importSavedData(file) {
     return;
   }
   try {
-    const response = await fetch("./word_list.json", { cache: "no-store" });
-    if (!response.ok) throw new Error(`Unable to load word_list.json: HTTP ${response.status}`);
-    const list = await response.json();
-    if (!list || !Array.isArray(list.words)) throw new Error("word_list.json has no words array");
+    const list = await window.CrosswordStorage.loadWordList("word_list.json");
     const levels = Array.isArray(list.meta?.levels)
       ? list.meta.levels.map((level) => level?.key).filter((level) => typeof level === "string")
       : [...new Set(list.words.map((word) => word?.level).filter((level) => typeof level === "string"))];
@@ -267,10 +264,7 @@ function resetSettingsAndProgress() {
 }
 
 async function loadWordLevels() {
-  const response = await fetch("./word_list.json", { cache: "no-store" });
-  if (!response.ok) throw new Error(`Unable to load word_list.json: HTTP ${response.status}`);
-  const data = await response.json();
-  if (!data || !Array.isArray(data.words)) throw new Error("word_list.json has no words array");
+  const data = await window.CrosswordStorage.loadWordList("word_list.json");
   const settings = window.CrosswordStorage.readSettings();
   const metaLevels = Array.isArray(data.meta?.levels) ? data.meta.levels : [];
   availableWordLevels = metaLevels
