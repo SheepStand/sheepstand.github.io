@@ -273,38 +273,25 @@ function playWordAudio(word, button) {
     wordsElements.status.textContent = wordsText("audioError");
     wordsElements.status.className = "game-status error";
   };
-  const playSource = (source, allowLegacyFallback) => {
-    const activeAudio = new Audio(source);
-    currentWordAudio = activeAudio;
-    button.disabled = true;
-    activeAudio.addEventListener("ended", () => finish(activeAudio), { once: true });
-    activeAudio.addEventListener("error", () => {
-      if (currentWordAudio !== activeAudio) return;
-      if (allowLegacyFallback) {
-        playSource(`./audio/${filename}.mp3`, false);
-      } else {
-        finish(activeAudio);
-        showError(new Error("Audio file is missing or could not be decoded"));
-      }
-    }, { once: true });
-    activeAudio.play().catch((error) => {
-      if (currentWordAudio !== activeAudio) return;
-      if (allowLegacyFallback) {
-        playSource(`./audio/${filename}.mp3`, false);
-      } else {
-        finish(activeAudio);
-        showError(error);
-      }
-    });
-  };
-
+  const audio = new Audio(`./audio/${filename}.${variant}.wav`);
+  currentWordAudio = audio;
+  button.disabled = true;
+  audio.addEventListener("ended", () => finish(audio), { once: true });
+  audio.addEventListener("error", () => {
+    if (currentWordAudio !== audio) return;
+    finish(audio);
+    showError(new Error("Audio file is missing or could not be decoded"));
+  }, { once: true });
   stopCurrentWordAudio = () => {
-    const activeAudio = currentWordAudio;
-    if (!activeAudio) return;
-    activeAudio.pause();
-    finish(activeAudio);
+    if (currentWordAudio !== audio) return;
+    audio.pause();
+    finish(audio);
   };
-  playSource(`./audio/${filename}.${variant}.wav`, true);
+  audio.play().catch((error) => {
+    if (currentWordAudio !== audio) return;
+    finish(audio);
+    showError(error);
+  });
 }
 
 function toggleLearned(index) {
