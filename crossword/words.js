@@ -7,6 +7,11 @@ const wordsTranslations = {
     settingsLink: "Settings",
     searchLabel: "Search",
     searchPlaceholder: "Search words or meanings",
+    progressFilterLabel: "Learning status",
+    filterAll: "All words",
+    filterLearning: "Learning",
+    filterLearned: "Learned",
+    filterNotLearned: "Not learned",
     wordColumn: "Word",
     audioColumn: "Audio",
     playAudio: "Play audio",
@@ -40,6 +45,11 @@ const wordsTranslations = {
     settingsLink: "设置",
     searchLabel: "搜索",
     searchPlaceholder: "搜索单词或释义",
+    progressFilterLabel: "学习状态",
+    filterAll: "全部单词",
+    filterLearning: "学习中",
+    filterLearned: "已学会",
+    filterNotLearned: "未学习",
     wordColumn: "单词",
     audioColumn: "发音",
     playAudio: "播放发音",
@@ -69,6 +79,7 @@ const wordsTranslations = {
 
 const wordsElements = {
   search: document.querySelector("#word-search"),
+  progressFilter: document.querySelector("#word-progress-filter"),
   rows: document.querySelector("#word-rows"),
   status: document.querySelector("#words-status"),
   summary: document.querySelector("#word-summary")
@@ -181,7 +192,13 @@ function renderWordList() {
     const phonetic = wordsEnglishVariant === "uk" ? word.phoneticUk : word.phoneticUs;
     const mastered = wordsCorrectCounts[word.sourceIndex] >= 3;
     const manuallyLearned = wordsLearned[word.sourceIndex] === 1;
-    if (mastered || manuallyLearned) learnedCount += 1;
+    const learned = mastered || manuallyLearned;
+    const learning = !learned && wordsCorrectCounts[word.sourceIndex] > 0;
+    if (learned) learnedCount += 1;
+    const selectedProgress = wordsElements.progressFilter.value;
+    if ((selectedProgress === "learned" && !learned)
+      || (selectedProgress === "learning" && !learning)
+      || (selectedProgress === "not-learned" && (learned || learning))) return;
     const haystack = `${displayWord} ${word.wordUs} ${word.wordUk} ${phonetic} ${word.level} ${word.pos} ${word.definitionEn} ${word.definitionZh}`.toLocaleLowerCase();
     if (query && !haystack.includes(query)) return;
     visibleCount += 1;
@@ -311,6 +328,7 @@ async function initializeWordsPage() {
 }
 
 wordsElements.search.addEventListener("input", renderWordList);
+wordsElements.progressFilter.addEventListener("change", renderWordList);
 
 const savedSettings = window.CrosswordStorage.readSettings();
 wordsLocale = savedSettings.locale === "zh" ? "zh" : "en";

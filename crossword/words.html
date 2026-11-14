@@ -30,6 +30,15 @@
           <span data-i18n="searchLabel">Search</span>
           <input id="word-search" type="search" autocomplete="off">
         </label>
+        <label class="language-control" for="word-progress-filter">
+          <span data-i18n="progressFilterLabel">Learning status</span>
+          <select id="word-progress-filter" aria-label="Learning status">
+            <option value="all" data-i18n="filterAll">All words</option>
+            <option value="learning" data-i18n="filterLearning">Learning</option>
+            <option value="learned" data-i18n="filterLearned">Learned</option>
+            <option value="not-learned" data-i18n="filterNotLearned">Not learned</option>
+          </select>
+        </label>
       </section>
 
       <p id="words-status" class="game-status" role="status" aria-live="polite"></p>
